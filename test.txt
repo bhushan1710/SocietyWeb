@@ -1,0 +1,1199 @@
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="dashboard.aspx.cs" Inherits="Society.dashboard" MasterPageFile="~/Site.Master" %>
+
+<%@ Register Assembly="System.Web.DataVisualization, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" Namespace="System.Web.UI.DataVisualization.Charting" TagPrefix="asp" %>
+
+<asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
+    <link href="css/layout.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Modern Card Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Layout Container */
+        .layout-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .layout-left {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .layout-right {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Top Dashboard Cards */
+        .top-dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .top-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .top-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .top-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(102, 126, 234, 0.3);
+        }
+
+        .top-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .top-card h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .top-card .top-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .top-card .top-icon {
+            font-size: 32px;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .top-card:hover .top-icon {
+            transform: rotate(10deg) scale(1.1);
+        }
+
+        /* Modern Card Component */
+        .modern-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .modern-card:hover {
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+
+        .card-header h6 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header h6::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Expense Chart Container */
+        .chart-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .checkbox-container label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+        }
+
+        /* PDC Card */
+        .pdc-cheque-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: white;
+            border-radius: 16px;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .pdc-cheque-card:hover {
+            transform: translateX(8px);
+            border-color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+        }
+
+        .pdc-calendar-box {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .pdc-calendar-box span:first-child {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .pdc-calendar-box span:last-child {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: -2px;
+        }
+
+        .pdc-details {
+            flex-grow: 1;
+        }
+
+        .pdc-details .pdc-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .pdc-details .pdc-cheque-number {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .pdc-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+            margin-left: 16px;
+        }
+
+        /* Weekly Updates */
+        .update-grid {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .update-grid:hover {
+            border-color: #667eea;
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .update-grid img {
+            border-radius: 8px;
+        }
+
+        /* Recent Activity */
+        .recent-activity {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .recent-activity:hover {
+            background: rgba(102, 126, 234, 0.05);
+            padding-left: 20px;
+        }
+
+        .recent-activity:last-child {
+            border-bottom: none;
+        }
+
+        .recent-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 14px;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .green-bg {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .blue-bg {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .recent-details .recent-text {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .recent-details .recent-time {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .recent-amount {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .green-txt {
+            color: #10b981;
+        }
+
+        .blue-txt {
+            color: #3b82f6;
+        }
+
+        /* HelpDesk Cards */
+        .helpdesk-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .helpdesk-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .helpdesk-card:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+        }
+
+        .helpdesk-card-title {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .helpdesk-card-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            padding: 8px;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            color: #667eea;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #63357c 100%);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .layout-container {
+                grid-template-columns: 1fr;
+            }
+
+            .layout-right {
+                grid-template-columns: repeat(2, 1fr);
+                display: grid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .layout-container {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .top-dashboard {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .top-card {
+                padding: 20px;
+            }
+
+            .top-card .top-value {
+                font-size: 28px;
+            }
+
+            .top-card .top-icon {
+                width: 56px;
+                height: 56px;
+                font-size: 28px;
+            }
+
+            .layout-right {
+                grid-template-columns: 1fr;
+            }
+
+            .helpdesk-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .card-header h6 {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .layout-container {
+                padding: 12px;
+            }
+
+            .card-body {
+                padding: 16px;
+            }
+
+            .card-header {
+                padding: 16px;
+            }
+
+            .pdc-cheque-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .pdc-amount {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+
+            .recent-activity {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .recent-activity-right {
+                align-self: flex-end;
+            }
+        }
+
+        /* Link Styles */
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        .link-style {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* Loading Animation */
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .loading {
+            animation: shimmer 2s infinite;
+            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-size: 1000px 100%;
+        }
+
+        /* No Data Images */
+        .no-data-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .no-data-container img {
+            max-width: 100%;
+            height: auto;
+            opacity: 0.7;
+        }
+
+        /* Chart Container */
+        #reportsChart {
+            padding: 20px 0;
+        }
+
+        /* Overflow handling */
+        .update-card {
+            overflow-y: auto;
+            max-height: 400px;
+            padding: 8px;
+        }
+
+        /* GridView styling */
+        .custom-gridview {
+            width: 100%;
+            border: none;
+        }
+
+        .custom-gridview td {
+            border: none;
+        }
+    </style>
+
+    <div class="layout-container mb-5">
+        <!-- LEFT COLUMN -->
+        <div class="layout-left">
+            <!-- Top Dashboard Cards -->
+            <div class="top-dashboard">
+                <!-- Card 1: Due Payments -->
+                <a href="Defaulter.aspx">
+                    <div class="top-card">
+                        <div>
+                            <h2>Due Payments</h2>
+                            <asp:UpdatePanel runat="server" ID="updatePanelDue" UpdateMode="Conditional">
+                                <ContentTemplate>
+                                    <asp:HiddenField ID="society_id" runat="server" />
+                                    <asp:HiddenField ID="notice_id" runat="server" />
+                                    <asp:HiddenField ID="HiddenField4" runat="server" />
+                                    <div class="top-value">
+                                        ₹<asp:Label runat="server" ID="lblDue"></asp:Label>
+                                    </div>
+                                </ContentTemplate>
+                                <Triggers>
+                                    <asp:AsyncPostBackTrigger ControlID="due_this_month" EventName="Click" />
+                                    <asp:AsyncPostBackTrigger ControlID="due_last_month" EventName="Click" />
+                                    <asp:AsyncPostBackTrigger ControlID="due_this_year" EventName="Click" />
+                                </Triggers>
+                            </asp:UpdatePanel>
+                        </div>
+                        <div class="top-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card 2: Defaulters -->
+                <a href="Defaulter.aspx">
+                    <div class="top-card">
+                        <div>
+                            <h2>Defaulters</h2>
+                            <div class="top-value">
+                                <asp:Label runat="server" ID="defaulter"></asp:Label>
+                            </div>
+                        </div>
+                        <div class="top-icon">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card 3: Total Members -->
+                <a href="owner_search.aspx">
+                    <div class="top-card">
+                        <div>
+                            <h2>Total Members</h2>
+                            <div class="top-value">
+                                <asp:Label runat="server" ID="residents"></asp:Label>
+                            </div>
+                        </div>
+                        <div class="top-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Expense Tracker -->
+            <div class="modern-card" id="chartContainer">
+                <asp:UpdatePanel runat="server" UpdateMode="Conditional">
+                    <ContentTemplate>
+                        <div class="card-header">
+                            <h6>Expense Tracker</h6>
+                            <div class="chart-controls">
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="CheckBox1" checked="checked">
+                                    <label for="CheckBox1">Regular</label>
+                                </div>
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="CheckBox2">
+                                    <label for="CheckBox2">Add on</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <asp:Panel runat="server" ID="lblNoDataFound2" Visible="False" CssClass="no-data-container">
+                                <img src="img/noDataFound2.jpg" alt="No data" />
+                            </asp:Panel>
+                            <div id="reportsChart"></div>
+                        </div>
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+            </div>
+
+            <!-- PDC and Weekly Updates Container -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                <!-- PDC Clearing -->
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h6>PDC Clearing</h6>
+                    </div>
+                    <div class="card-body">
+                        <asp:Panel ID="lblNoDataFound3" runat="server" CssClass="no-data-container">
+                            <img src="img/noDataFound3.jpg" alt="No data" />
+                        </asp:Panel>
+                        <asp:UpdatePanel runat="server" UpdateMode="Conditional">
+                            <ContentTemplate>
+                                <asp:GridView 
+                                    AllowPaging="true" 
+                                    OnPageIndexChanging="GridView1_PageIndexChanging"
+                                    PageSize="3" 
+                                    ID="GridView1" 
+                                    runat="server" 
+                                    AutoGenerateColumns="false"
+                                    CssClass="custom-gridview" 
+                                    AllowSorting="true" 
+                                    OnSorting="GridView1_Sorting" 
+                                    Width="100%" 
+                                    BorderStyle="None" 
+                                    ShowHeader="False">
+                                    <Columns>
+                                        <asp:TemplateField>
+                                            <ItemTemplate>
+                                                <div class="pdc-cheque-card">
+                                                    <div class="pdc-calendar-box">
+                                                        <span>
+                                                            <asp:Label ID="che_date" runat="server" Text='<%# Bind("che_date", "{0:MMM}")%>'></asp:Label>
+                                                        </span>
+                                                        <span>
+                                                            <asp:Label ID="Label2" runat="server" Text='<%# Bind("che_date", "{0:dd}")%>'></asp:Label>
+                                                        </span>
+                                                    </div>
+                                                    <div class="pdc-details">
+                                                        <span class="pdc-name">
+                                                            <asp:Label ID="o_name" runat="server" Text='<%# Bind("name")%>'></asp:Label>
+                                                        </span>
+                                                        <span class="pdc-cheque-number">
+                                                            Cheque #<asp:Label ID="chqno" runat="server" Text='<%# Bind("chqno")%>'></asp:Label>
+                                                        </span>
+                                                    </div>
+                                                    <div class="pdc-amount">
+                                                        ₹<asp:Label ID="che_amount" runat="server" Text='<%# Bind("che_amount")%>'></asp:Label>
+                                                    </div>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+                                    </Columns>
+                                </asp:GridView>
+                        <div style="padding: 12px 16px; border-top: 1px solid rgba(0, 0, 0, 0.05);">
+                            <a href="recent_activity.aspx" style="color: #667eea; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;">
+                                See All
+                                <i class="fas fa-arrow-right" style="font-size: 12px;"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Tracker -->
+            <asp:UpdatePanel runat="server" ID="updatePanelDonat" UpdateMode="Conditional">
+                <ContentTemplate>
+                    <div class="modern-card">
+                        <div class="card-header">
+                            <h6>Income Tracker</h6>
+                            <div class="dropdown no-arrow">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: #64748b; font-size: 20px; transition: all 0.3s ease;">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                                    <asp:Button ID="due_this_month" runat="server" CssClass="dropdown-item" Text="This Month" OnClick="due_this_month_Click"></asp:Button>
+                                    <asp:Button ID="due_last_month" runat="server" CssClass="dropdown-item" Text="Last Month" OnClick="due_last_month_Click"></asp:Button>
+                                    <asp:Button ID="due_this_year" runat="server" CssClass="dropdown-item" Text="This Year" OnClick="due_this_year_Click"></asp:Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <asp:Label ID="lblNoData" runat="server" CssClass="no-data-container">
+                                <img src="img/noDataFound.jpg" alt="No data" />
+                            </asp:Label>
+
+                            <asp:Chart ID="Chart1" runat="server" BackColor="Transparent">
+                                <Series>
+                                    <asp:Series Name="Default" ChartType="Doughnut"
+                                        IsValueShownAsLabel="false"
+                                        Label="#PERCENT{P1}"
+                                        ToolTip="#VALX: ₹#VALY"
+                                        Font="Segoe UI, 9pt"
+                                        LabelForeColor="White">
+                                    </asp:Series>
+                                </Series>
+
+                                <ChartAreas>
+                                    <asp:ChartArea Name="ChartArea1" BackColor="Transparent">
+                                        <Area3DStyle Enable3D="true" LightStyle="Realistic" />
+                                        <AxisX LineWidth="0" MajorGrid-Enabled="False" LabelStyle-Enabled="False" />
+                                        <AxisY LineWidth="0" MajorGrid-Enabled="False" LabelStyle-Enabled="False" />
+                                    </asp:ChartArea>
+                                </ChartAreas>
+                            </asp:Chart>
+
+                            <asp:Panel ID="chartDots" runat="server">
+                                <div class="mt-4 text-center small" style="display: flex; gap: 20px; justify-content: center;">
+                                    <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #64748b;">
+                                        <i class="fas fa-circle" style="color: #667eea; font-size: 10px;"></i>
+                                        Due
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #64748b;">
+                                        <i class="fas fa-circle" style="color: #A6B4FD; font-size: 10px;"></i>
+                                        Collection
+                                    </span>
+                                </div>
+                            </asp:Panel>
+                        </div>
+                    </div>
+                </ContentTemplate>
+            </asp:UpdatePanel>
+
+            <!-- HelpDesk Ticket -->
+            <asp:Timer ID="SharedTimer" runat="server" Interval="1000" OnTick="TimerNotif_Tick" />
+            <div class="modern-card">
+                <a href="support_ticket.aspx">
+                    <div class="card-header">
+                        <h6>HelpDesk Ticket</h6>
+                    </div>
+                    <div class="card-body">
+                        <asp:UpdatePanel ID="upNotifCount" runat="server" UpdateMode="Conditional">
+                            <ContentTemplate>
+                                <div class="helpdesk-cards">
+                                    <div class="helpdesk-card">
+                                        <div class="helpdesk-card-title">Open Ticket</div>
+                                        <div class="helpdesk-card-number">
+                                            <asp:Label ID="open" runat="server" Text="Open"></asp:Label>
+                                        </div>
+                                    </div>
+                                    <div class="helpdesk-card">
+                                        <div class="helpdesk-card-title">Resolve Tickets</div>
+                                        <div class="helpdesk-card-number">
+                                            <asp:Label ID="resolved" runat="server" Text="Resolved"></asp:Label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <asp:Label ID="lblToken" runat="server" Text="" Visible="false"></asp:Label>
+                            </ContentTemplate>
+                            <Triggers>
+                                <asp:AsyncPostBackTrigger ControlID="SharedTimer" EventName="Tick" />
+                            </Triggers>
+                        </asp:UpdatePanel>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <asp:Label runat="server" ID="hiddenJson" Visible="false"></asp:Label>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        let chartInstance = null;
+
+        function getSelectedCheckboxValue() {
+            const checkbox1 = document.getElementById('CheckBox1');
+            const checkbox2 = document.getElementById('CheckBox2');
+
+            const isChecked1 = checkbox1.checked;
+            const isChecked2 = checkbox2.checked;
+
+            if (isChecked1 && isChecked2) return 2;
+            if (isChecked1) return 0;
+            if (isChecked2) return 1;
+
+            return 3;
+        }
+
+        function loadExpenseChart() {
+            const selectedValue = getSelectedCheckboxValue();
+
+            fetch('TokenService.asmx/getJson', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ a: selectedValue })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    try {
+                        const parsed = JSON.parse(data.d);
+                        const months = parsed.map(item => item.expense_month);
+                        const expenseData = parsed.map(item => item.expense);
+                        const dueData = parsed.map(item => item.Due);
+                        const collectionData = parsed.map(item => item.Collection);
+
+                        const options = {
+                            series: [
+                                { name: 'Expense', data: expenseData },
+                                { name: 'Due', data: dueData },
+                                { name: 'Collection', data: collectionData }
+                            ],
+                            chart: {
+                                height: 350,
+                                type: 'area',
+                                toolbar: { show: false },
+                                animations: {
+                                    enabled: true,
+                                    easing: 'easeinout',
+                                    speed: 800,
+                                    animateGradually: {
+                                        enabled: true,
+                                        delay: 150
+                                    },
+                                    dynamicAnimation: {
+                                        enabled: true,
+                                        speed: 350
+                                    }
+                                }
+                            },
+                            markers: { 
+                                size: 5,
+                                colors: ['#4154f1', '#ffc107', '#28a745'],
+                                strokeColors: '#fff',
+                                strokeWidth: 2,
+                                hover: {
+                                    size: 7
+                                }
+                            },
+                            colors: ['#667eea', '#ffc107', '#10b981'],
+                            fill: {
+                                type: "gradient",
+                                gradient: {
+                                    shadeIntensity: 1,
+                                    opacityFrom: 0.4,
+                                    opacityTo: 0.1,
+                                    stops: [0, 90, 100]
+                                }
+                            },
+                            dataLabels: { enabled: false },
+                            stroke: { 
+                                curve: 'smooth', 
+                                width: 3
+                            },
+                            xaxis: {
+                                type: 'category',
+                                categories: months,
+                                labels: {
+                                    style: {
+                                        colors: '#64748b',
+                                        fontSize: '12px',
+                                        fontFamily: 'Inter, sans-serif'
+                                    }
+                                }
+                            },
+                            yaxis: {
+                                labels: {
+                                    style: {
+                                        colors: '#64748b',
+                                        fontSize: '12px',
+                                        fontFamily: 'Inter, sans-serif'
+                                    },
+                                    formatter: function(val) {
+                                        return '₹' + val.toFixed(0);
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                x: { format: 'MMM' },
+                                theme: 'light',
+                                style: {
+                                    fontSize: '14px',
+                                    fontFamily: 'Inter, sans-serif'
+                                }
+                            },
+                            legend: {
+                                position: 'top',
+                                horizontalAlign: 'right',
+                                labels: {
+                                    colors: '#64748b'
+                                },
+                                markers: {
+                                    width: 10,
+                                    height: 10,
+                                    radius: 10
+                                }
+                            },
+                            grid: {
+                                borderColor: 'rgba(0,0,0,0.05)',
+                                strokeDashArray: 4
+                            }
+                        };
+
+                        if (chartInstance) {
+                            chartInstance.destroy();
+                        }
+
+                        chartInstance = new ApexCharts(document.querySelector("#reportsChart"), options);
+                        chartInstance.render();
+
+                    } catch (err) {
+                        console.error('Chart error:', err);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+        }
+
+        window.addEventListener("load", () => {
+            document.getElementById('CheckBox1').addEventListener('change', loadExpenseChart);
+            document.getElementById('CheckBox2').addEventListener('change', loadExpenseChart);
+            loadExpenseChart();
+        });
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
+    <script type="text/javascript">
+        firebase.initializeApp({
+            apiKey: "AIzaSyCVD6hUSK4zMfG43bMjyjwTFmTz5PJc_qk",
+            authDomain: "society-management-32053.firebaseapp.com",
+            projectId: "society-management-32053",
+            storageBucket: "society-management-32053.appspot.com",
+            messagingSenderId: "303424747645",
+            appId: "1:303424747645:web:a10ad8eceb38c4fe10d914",
+            measurementId: "G-MCRPPNVW38"
+        });
+
+        const messaging = firebase.messaging();
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                    .then((registration) => {
+                        return messaging.getToken({
+                            vapidKey: "BKJDUyImlBxO4O_UewJxcN8Ug0EdqxsmxbwQ8nn2bscwwWBUGPGsuMdlU9IKvuTe60iz59iJC0wBMfGuXRkqj2E",
+                            serviceWorkerRegistration: registration
+                        });
+                    })
+                    .then(token => {
+                        console.log('FCM Token:', token);
+                        sendTokenToServer(token);
+                    })
+                    .catch(error => {
+                        console.error('FCM Error:', error);
+                    });
+            }
+        });
+
+        function sendTokenToServer(token) {
+            fetch('TokenService.asmx/SaveToken', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: token })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Token saved:', data);
+                })
+                .catch(error => {
+                    console.error('Token save error:', error);
+                });
+        }
+    </script>
+
+</asp:Content>
+                            </ContentTemplate>
+                        </asp:UpdatePanel>
+                    </div>
+                </div>
+
+                <!-- Weekly Updates -->
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h6>Weekly Updates</h6>
+                    </div>
+                    <div class="card-body update-card">
+                        <asp:GridView 
+                            Width="100%" 
+                            OnRowCommand="Updates_RowCommand" 
+                            ID="Updates" 
+                            runat="server" 
+                            ShowHeader="false" 
+                            AutoGenerateColumns="false" 
+                            GridLines="None" 
+                            EmptyDataText="No Updates"
+                            CssClass="custom-gridview">
+                            <Columns>
+                                <asp:TemplateField HeaderText="Building" ItemStyle-Width="100%">
+                                    <ItemTemplate>
+                                        <asp:LinkButton
+                                            ID="lnkDetails"
+                                            runat="server"
+                                            CommandName="Redirect"
+                                            CommandArgument='<%# Eval("type") %>'>
+                                            <div class="update-grid">
+                                                <asp:Image runat="server" Width="35px" Height="39px"
+                                                    ImageUrl='<%# Eval("ImageUrl") %>'
+                                                    AlternateText="Type Image" />
+                                                <div style="flex: 1;">
+                                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                                        <asp:Label runat="server" Text='<%# Eval("type") %>' Font-Size="13px" ForeColor="#64748b"></asp:Label>
+                                                        <asp:Label runat="server" Text='<%# Eval("date", "{0:yyyy-MM-dd}") %>' Font-Size="12px" ForeColor="#94a3b8"></asp:Label>
+                                                    </div>
+                                                    <asp:Label runat="server" Text='<%# Eval("name") %>' Font-Size="14px" Font-Bold="true" ForeColor="#1e293b"></asp:Label>
+                                                </div>
+                                            </div>
+                                        </asp:LinkButton>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                            </Columns>
+                        </asp:GridView>
+                        <asp:Panel ID="noUpdates4" runat="server" CssClass="no-data-container">
+                            <img src="img/noUpdates.jpg" alt="No updates" />
+                        </asp:Panel>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="layout-right">
+            <!-- Recent Activity -->
+            <div class="modern-card">
+                <div class="card-header">
+                    <h6>Recent Activity</h6>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <asp:GridView 
+                            Width="100%" 
+                            OnRowCommand="Updates_RowCommand" 
+                            ID="Recent_activity" 
+                            runat="server" 
+                            ShowHeader="false" 
+                            AutoGenerateColumns="false" 
+                            GridLines="None" 
+                            EmptyDataText="No Updates"
+                            CssClass="custom-gridview">
+                            <Columns>
+                                <asp:TemplateField HeaderText="Building" ItemStyle-Width="100%">
+                                    <ItemTemplate>
+                                        <div class="recent-activity">
+                                            <div style="display: flex; align-items: center;">
+                                                <div class='<%# Eval("received_amt").ToString() == "0.00" ? "recent-icon blue-bg" : "recent-icon green-bg" %>'>
+                                                    <i class='<%# Eval("received_amt").ToString() == "0.00" ? "fas fa-tools text-white" : "fas fa-check text-white" %>'></i>
+                                                </div>
+                                                <div class="recent-details">
+                                                    <div class="recent-text">
+                                                        <asp:Label ID="Label1" runat="server" Text='<%# Bind("particular")%>'></asp:Label>
+                                                    </div>
+                                                    <div class="recent-time">
+                                                        <asp:Label ID="Label3" runat="server" Text='<%# Bind("timestamp")%>'></asp:Label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="recent-amount">
+                                                <asp:Label CssClass='<%# Eval("received_amt").ToString() == "0.00" ? "blue-txt" : "green-txt" %>' 
+                                                    ID="Label2" runat="server" 
+                                                    Text='<%# Eval("received_amt").ToString() == "0.00" ? Eval("date", "{0:MMM-dd}") : "₹" + Eval("received_amt")%>'>
+                                                </asp:Label>
+                                            </div>
+                                        </div>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                            </Columns>
+                        </asp:GridView>
+                        <asp:Panel ID="noUpdates3" runat="server" CssClass="no-data-container">
+                            <img src="img/noUpdates.jpg" alt="No updates" />
+                        </asp:Panel>
+                    </div>
+                    <div style="padding: 12px 16px; border-top: 1px solid rgba(0, 0, 0, 0.05);">
+                        <a href="recent_activity.aspx" style="color: #667eea; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;">
+                            See All
+                            <i class="fas fa-arrow-right" style="font-size: 12px;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</asp:Content>
